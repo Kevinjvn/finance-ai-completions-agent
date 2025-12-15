@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Financiero BCP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .dot-bounce { animation: bounce 1s infinite; }
+        .dot-bounce-1 { animation-delay: 0s; }
+        .dot-bounce-2 { animation-delay: 0.1s; }
+        .dot-bounce-3 { animation-delay: 0.2s; }
+        
+        /* Markdown Styles */
+        .markdown-content h1 { font-size: 1.5em; font-weight: bold; margin: 0.5em 0; }
+        .markdown-content h2 { font-size: 1.3em; font-weight: bold; margin: 0.5em 0; }
+        .markdown-content h3 { font-size: 1.1em; font-weight: bold; margin: 0.5em 0; }
+        .markdown-content p { margin: 0.5em 0; }
+        .markdown-content ul, .markdown-content ol { margin: 0.5em 0; padding-left: 1.5em; }
+        .markdown-content li { margin: 0.25em 0; }
+        .markdown-content code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+        .markdown-content pre { background-color: #1e293b; color: #e2e8f0; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin: 0.5em 0; }
+        .markdown-content pre code { background-color: transparent; padding: 0; color: #e2e8f0; }
+        .markdown-content blockquote { border-left: 4px solid #d1d5db; padding-left: 1em; margin: 0.5em 0; color: #6b7280; }
+        .markdown-content a { color: #2563eb; text-decoration: underline; }
+        .markdown-content strong { font-weight: bold; }
+        .markdown-content em { font-style: italic; }
+        .markdown-content hr { border: 0; border-top: 1px solid #d1d5db; margin: 1em 0; }
+        .markdown-content table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+        .markdown-content th, .markdown-content td { border: 1px solid #d1d5db; padding: 0.5em; text-align: left; }
+        .markdown-content th { background-color: #f3f4f6; font-weight: bold; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+    <div id="app" class="flex flex-col h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
+        <!-- Header -->
+        <div class="bg-white shadow-lg">
+            <div class="max-w-4xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-blue-900">Asistente Financiero BCP</h1>
+                        <p class="text-sm text-gray-600 mt-1">
+                            <span class="font-semibold">Endpoint:</span>
+                            <span id="endpoint-display" class="font-mono text-xs bg-gray-100 px-2 py-1 rounded ml-2"></span>
+                        </p>
+                    </div>
+                    <button onclick="clearChat()" class="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors shadow-md">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Limpiar Chat
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages-container" class="flex-1 overflow-y-auto">
+            <div class="max-w-4xl mx-auto px-6 py-6">
+                <div id="welcome-message" class="text-center text-white/70 mt-20">
+                    <div class="text-6xl mb-4">💬</div>
+                    <h2 class="text-2xl font-semibold mb-2">¡Hola! Soy tu asistente financiero</h2>
+                    <p class="text-lg">Pregúntame sobre productos bancarios, préstamos, inversiones y más</p>
+                </div>
+                <div id="messages" class="space-y-4 hidden"></div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-container" class="max-w-4xl mx-auto px-6 pb-2 hidden">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="error-message" class="text-sm"></span>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="bg-white border-t shadow-lg">
+            <div class="max-w-4xl mx-auto px-6 py-4">
+                <div class="flex gap-3">
+                    <input 
+                        type="text" 
+                        id="message-input" 
+                        placeholder="Escribe tu mensaje..."
+                        class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    />
+                    <button 
+                        id="send-button"
+                        onclick="sendMessage()"
+                        class="bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center gap-2"
+                    >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - CHANGE THIS TO YOUR BACKEND URL
+        const API_ENDPOINT = 'http://localhost:8000/api/chat';
+        
+        // Configure marked for markdown parsing
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+        
+        // State
+        let isLoading = false;
+
+        // Initialize
+        document.getElementById('endpoint-display').textContent = API_ENDPOINT;
+        
+        // Event listeners
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function clearChat() {
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('messages').classList.add('hidden');
+            document.getElementById('welcome-message').classList.remove('hidden');
+            document.getElementById('error-container').classList.add('hidden');
+            document.getElementById('message-input').value = '';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isLoading) return;
+
+            // Hide welcome, show messages
+            document.getElementById('welcome-message').classList.add('hidden');
+            document.getElementById('messages').classList.remove('hidden');
+            
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            setLoading(true);
+            hideError();
+
+            // Build request
+            const requestBody = {
+                messages: [{ role: 'user', content: message }]
+            };
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Add assistant message
+                addMessage('assistant', data.message.content);
+
+                hideLoading();
+            } catch (error) {
+                showError(error.message);
+                hideLoading();
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function addMessage(role, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = `max-w-3xl px-5 py-3 rounded-2xl shadow-lg ${
+                role === 'user' 
+                    ? 'bg-orange-500 text-white' 
+                    : 'bg-white text-gray-800'
+            }`;
+            
+            if (role === 'assistant') {
+                // Parse markdown for assistant messages
+                bubbleDiv.innerHTML = `<div class="text-sm markdown-content">${marked.parse(content)}</div>`;
+            } else {
+                // Plain text for user messages
+                bubbleDiv.innerHTML = `<div class="text-sm whitespace-pre-wrap">${escapeHtml(content)}</div>`;
+            }
+            
+            messageDiv.appendChild(bubbleDiv);
+            messagesDiv.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const input = document.getElementById('message-input');
+            const button = document.getElementById('send-button');
+            
+            input.disabled = loading;
+            button.disabled = loading;
+            
+            if (loading) {
+                showLoading();
+            }
+        }
+
+        function showLoading() {
+            const messagesDiv = document.getElementById('messages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading-indicator';
+            loadingDiv.className = 'flex justify-start';
+            loadingDiv.innerHTML = `
+                <div class="bg-white px-5 py-3 rounded-2xl shadow-lg">
+                    <div class="flex gap-1">
+                        <div class="w-2 h-2 bg-blue-900 rounded-full dot-bounce dot-bounce-1"></div>
+                        <div class="w-2 h-2 bg-blue-900 rounded-full dot-bounce dot-bounce-2"></div>
+                        <div class="w-2 h-2 bg-blue-900 rounded-full dot-bounce dot-bounce-3"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        function hideLoading() {
+            const loadingDiv = document.getElementById('loading-indicator');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-container').classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error-container').classList.add('hidden');
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messages-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>

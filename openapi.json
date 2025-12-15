@@ -1,0 +1,351 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Finance AI Agent",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/chat": {
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Chat Endpoint",
+        "operationId": "chat_endpoint_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatRequest": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageRequest"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Messages",
+            "description": "Lista de mensajes en el formato del protocolo Chat AI"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContextRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessionState": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionStateRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "messages"
+        ],
+        "title": "ChatRequest",
+        "description": "Represents a chat request, including a list of messages, optional context, and session state."
+      },
+      "ChatResponse": {
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContextResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessionState": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionStateResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatResponse",
+        "description": "Represents the response for a chat request, including the message, optional context, and session state."
+      },
+      "ContextRequest": {
+        "properties": {
+          "top": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top",
+            "description": "Número de resultados a retornar del motor de búsqueda.",
+            "example": 3
+          }
+        },
+        "type": "object",
+        "title": "ContextRequest",
+        "description": "Represents a request for context, specifying the number of search results to retrieve."
+      },
+      "ContextResponse": {
+        "properties": {
+          "followup_questions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followup Questions"
+          },
+          "data_points": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataPoints"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Información adicional proporcionada por el agente, incluyendo enlaces a documentos"
+          }
+        },
+        "type": "object",
+        "title": "ContextResponse",
+        "description": "Represents the response for a context request, including follow-up questions and additional data points."
+      },
+      "DataPoints": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "uniqueItems": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "Lista de textos o enlaces relacionados con la respuesta del agente"
+          }
+        },
+        "type": "object",
+        "title": "DataPoints",
+        "description": "Represents a collection of related texts or links associated with the agent's response."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "MessageRequest": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Rol relacionado al cliente que realiza la petición.",
+            "example": "user"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Content",
+            "description": "Mensaje y/o solicitud del usuario.",
+            "example": "Hello"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "MessageRequest",
+        "description": "Represents a message request, including the role of the sender and the content of the message."
+      },
+      "MessageResponse": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 3000,
+            "minLength": 1,
+            "title": "Content"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role",
+            "description": "Rol relacionado al cliente que realiza la petición."
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "MessageResponse",
+        "description": "Represents the response for a message, including the content and the optional role of the sender."
+      },
+      "SessionStateRequest": {
+        "properties": {
+          "threadId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threadid",
+            "description": "Identificador único del hilo de conversación generado por Azure Foundry",
+            "example": "thread_rrdnmO3xTJobugSetrR2y76t"
+          }
+        },
+        "type": "object",
+        "title": "SessionStateRequest",
+        "description": "Represents a request to manage the session state, including an optional thread ID for the conversation."
+      },
+      "SessionStateResponse": {
+        "properties": {
+          "threadId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threadid",
+            "description": "Identificador único del hilo de conversación generado por Azure Foundry"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runid",
+            "description": "Identificador único de la ejecución del agente en Azure Foundry"
+          }
+        },
+        "type": "object",
+        "title": "SessionStateResponse",
+        "description": "Represents the response for a session state, including optional thread and run IDs generated by Azure Foundry."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
